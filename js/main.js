@@ -1,62 +1,112 @@
 import * as PIXI from 'pixi.js'
 
-// let app = new PIXI.Application({width: 640, height: 360})
-// document.body.append(app.view)
-
-// let sprite = PIXI.Sprite.from('./assets/sample.png')
-
-// app.stage.addChild(sprite)
-
-// let elapsed = 0.0
-
-// app.ticker.add(delta => {
-//     elapsed += delta
-//     sprite.x = 100.0 + Math.cos(elapsed/50.0) * 100.0
-
-// })
-// Create the application helper and add its render target to the page
-
-
 let app = new PIXI.Application({width: 640, height: 360})
 document.body.append(app.view)
 
-//window frame
-let frame = new PIXI.Graphics()
-frame.beginFill(0x666666)
-frame.lineStyle({color: 0xffffff, width: 4, alignment: 0})
-frame.drawRect(0, 0, 208, 208)
-frame.position.set(320, -104, 180, -104)
-app.stage.addChild(frame)
+//
+let obj = new PIXI.Graphics()
+obj.beginFill(0xff0000)
+obj.drawRect(200, 0, 150, 100)
+obj.endFill()
+obj.eventMode ='static'
+obj.cursor = 'move'
+obj.on('pointerdown', onDragStart, obj)
 
-//mask
-let mask = new PIXI.Graphics()
-mask.beginFill(0xffffff)
-mask.drawRect(0, 0, 200, 200)
-mask.endFill
 
-let maskContainer = new PIXI.Container()
-maskContainer.mask = mask
-maskContainer.addChild(mask)
-maskContainer.position.set(4, 4)
-frame.addChild(maskContainer)
+app.stage.addChild(obj)
+app.stage.eventMode = 'static'
+app.stage.hitArea = app.screen;
+app.stage.on('pointerup', onDragEnd)
+app.stage.on('pointerupoutside', onDragEnd)
 
-let text = new PIXI.Text(
-    'This text will scroll up and be masked, so you can see how masking works.  Lorem ipsum and all that.\n\n' +
-    'You can put anything in the container and it will be masked!',
-    {
-        fontSize: 24,
-        fill: 0x1010ff,
-        wordWrap: true,
-        wordWrapWidth: 180
+let dragTarget = null
+let startPointX, startPointY, objX, objY, activeObject, activeObjBorder 
+
+
+function onDragMove(event) {
+    if (dragTarget) {
+        // console.log(event.x, startPointX);
+        dragTarget.x = event.data.originalEvent.clientX - startPointX + objX
+        dragTarget.y = event.data.originalEvent.clientY - startPointY + objY
+
+        addActiveTargetBorder()
     }
-)
-text.x = 10
-maskContainer.addChild(text)
+}
 
-let elapsed = 0.0
-app.ticker.add(delta => {
-    elapsed += delta
-    text.y = 10 + -100.0 + Math.cos(elapsed / 50) * 100.0
-})
+function onDragStart(event) {
+    // console.log(event);
+    this.alpha = 0.5
+    dragTarget = this
+    startPointX = event.data.originalEvent.clientX
+    startPointY = event.data.originalEvent.clientY
+    objX = obj.x
+    objY = obj.y
+    app.stage.on('pointermove', onDragMove)
+
+    activeObject = event.target;
+    
+    addActiveTargetBorder()
+
+}
 
 
+function onDragEnd() {
+    if (dragTarget) {
+        app.stage.off('pointermove', onDragMove)
+        dragTarget.alpha = 1
+        dragTarget = null
+        startPointX = null
+        startPointY = null
+    }
+}
+
+
+// border
+function  getObjBound(obj)  {
+    const localBounds = obj.getLocalBounds()
+    const tl = new PIXI.Point(localBounds.x, localBounds.y)
+    const tr = new PIXI.Point(localBounds.x + localBounds.width, localBounds.y)
+    const br = new PIXI.Point(localBounds.x + localBounds.width, localBounds.y + localBounds.height)
+    const bl = new PIXI.Point(localBounds.x, localBounds.y + localBounds.height)
+    const localPoints = [tl, tr, br, bl]
+
+    return localPoints
+}
+
+function addActiveTargetBorder() {
+    const bound = getObjBound(obj)
+    console.log(bound);
+    const border = new PIXI.Graphics()
+    border.lineStyle(1, 0x5b97fc)
+    border.drawPolygon(bound)
+    app.stage.addChild(border)
+    activeObjBorder = border
+}
+
+function updateActiveTargetBorder() {
+    if (activeObject && activeObjBorder) {
+        const bound = getObjBound(obj)
+        activeObjBorder.clear()
+        activeObjBorder.lineStyle(1, 0x5b97fc);
+        activeObjBorder.drawPolygon(bound); // 重新画draw border
+    }
+    
+}
+
+app.ticker.add(updateActiveTargetBorder)
+
+// ControlPoint
+class ControlPoint extends PIXI.Graphics {
+    constructor (target) {
+        super()
+        this.controlTarget = target
+    }
+}
+
+function addActiveTargetControlPoint(activeObject) {
+    const controlPoint = new ControlPoint(activeObject)
+    activeObjControlPoint = controlPoint
+    controlPoint.eventMode = 'static'
+    controlPoint.cursor = '' 
+
+}
