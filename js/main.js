@@ -107,6 +107,13 @@ function addActiveTargetControlPoint(activeObject) {
     const controlPoint = new ControlPoint(activeObject)
     activeObjControlPoint = controlPoint
     controlPoint.eventMode = 'static'
-    controlPoint.cursor = '' 
+    controlPoint.cursor = 'ns-resize' 
+    app.stage.addChild(controlPoint)
+    controlPoint.lineStyle(1, 0xc66965)
+    const radius = 2
+    controlPoint.beginFill(0xffffff)
+    controlPoint.drawCircle(0, 0, radius)
+    controlPoint.endFill()
+    
 
 }
