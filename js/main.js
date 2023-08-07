@@ -6,7 +6,7 @@ document.body.append(app.view)
 //
 let obj = new PIXI.Graphics()
 obj.beginFill(0xff0000)
-obj.drawRect(200, 0, 150, 100)
+obj.drawRect(200, 20, 150, 100)
 obj.endFill()
 obj.eventMode ='static'
 obj.cursor = 'move'
@@ -22,14 +22,22 @@ app.stage.on('pointerupoutside', onDragEnd)
 let dragTarget = null
 let startPointX, startPointY, objX, objY, activeObject, activeObjBorder 
 
+function clearActive() {
+    if (activeObjBorder) {
+        activeObjBorder.clear()
+        // app.ticker.remove(updateActiveTargetBorder)
+
+    }
+}
 
 function onDragMove(event) {
     if (dragTarget) {
+
         // console.log(event.x, startPointX);
         dragTarget.x = event.data.originalEvent.clientX - startPointX + objX
         dragTarget.y = event.data.originalEvent.clientY - startPointY + objY
 
-        addActiveTargetBorder()
+        // addActiveTargetBorder()
     }
 }
 
@@ -46,7 +54,9 @@ function onDragStart(event) {
     activeObject = event.target;
     
     addActiveTargetBorder()
-
+    app.ticker.add(updateActiveTargetBorder)
+    
+    // addActiveTargetControlPoint(obj)
 }
 
 
@@ -57,12 +67,14 @@ function onDragEnd() {
         dragTarget = null
         startPointX = null
         startPointY = null
+        app.stage.on('pointerdown', clearActive)
+        app.ticker.remove(updateActiveTargetBorder)
     }
 }
 
 
 // border
-function  getObjBound(obj)  {
+function  getObjStageBound(obj)  {
     const localBounds = obj.getLocalBounds()
     const tl = new PIXI.Point(localBounds.x, localBounds.y)
     const tr = new PIXI.Point(localBounds.x + localBounds.width, localBounds.y)
@@ -70,14 +82,18 @@ function  getObjBound(obj)  {
     const bl = new PIXI.Point(localBounds.x, localBounds.y + localBounds.height)
     const localPoints = [tl, tr, br, bl]
 
-    return localPoints
+    return localPoints.map(p => obj.localTransform.apply(p))
 }
 
 function addActiveTargetBorder() {
-    const bound = getObjBound(obj)
-    console.log(bound);
+    app.stage.off('pointerdown', clearActive)
+    if (activeObjBorder) {
+        activeObjBorder.clear()
+    }
+
+    const bound = getObjStageBound(obj)
     const border = new PIXI.Graphics()
-    border.lineStyle(1, 0x5b97fc)
+    border.lineStyle(2, 0x5b97fc)
     border.drawPolygon(bound)
     app.stage.addChild(border)
     activeObjBorder = border
@@ -85,15 +101,14 @@ function addActiveTargetBorder() {
 
 function updateActiveTargetBorder() {
     if (activeObject && activeObjBorder) {
-        const bound = getObjBound(obj)
+        const bound = getObjStageBound(obj)
         activeObjBorder.clear()
-        activeObjBorder.lineStyle(1, 0x5b97fc);
+        activeObjBorder.lineStyle(2, 0x5b97fc);
         activeObjBorder.drawPolygon(bound); // 重新画draw border
     }
     
 }
 
-app.ticker.add(updateActiveTargetBorder)
 
 // ControlPoint
 class ControlPoint extends PIXI.Graphics {
@@ -103,6 +118,8 @@ class ControlPoint extends PIXI.Graphics {
     }
 }
 
+
+let activeObjControlPoint
 function addActiveTargetControlPoint(activeObject) {
     const controlPoint = new ControlPoint(activeObject)
     activeObjControlPoint = controlPoint
@@ -110,10 +127,38 @@ function addActiveTargetControlPoint(activeObject) {
     controlPoint.cursor = 'ns-resize' 
     app.stage.addChild(controlPoint)
     controlPoint.lineStyle(1, 0xc66965)
-    const radius = 2
+    const radius = 10
     controlPoint.beginFill(0xffffff)
     controlPoint.drawCircle(0, 0, radius)
     controlPoint.endFill()
-    
-
+    const bound = getObjStageBound(activeObject)
+    const [tl, tr] = bound
+    controlPoint.position.set((tl.x + tr.x) / 2, (tl.y + tr.y) / 2)
 }
+
+// function updateActiveTargetControlPoint() {
+//     if (activeObject && activeObjControlPoint) {
+//         activeObjControlPoint.clear()
+//         activeObjControlPoint.lineStyle(1, 0xc66965)
+//         const radius = 4
+//         activeObjControlPoint.beginFill(0xffffff)
+//         activeObjControlPoint.drawCircle(0, 0, radius)
+//         activeObjControlPoint.endFill()
+//         const bound = getObjStageBound(activeObject)
+//         const [tl, tr] = bound
+//         activeObjControlPoint.position.set(
+//             (tl.x + tr.x) / 2,
+//             (tl.y + tr.y) / 2
+//         )
+//     }
+// }
+// app.ticker.add(updateActiveTargetControlPoint)
+
+
+
+
+
+
+
+
+
