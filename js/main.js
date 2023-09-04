@@ -136,23 +136,23 @@ function addActiveTargetControlPoint(activeObject) {
     controlPoint.position.set((tl.x + tr.x) / 2, (tl.y + tr.y) / 2)
 }
 
-// function updateActiveTargetControlPoint() {
-//     if (activeObject && activeObjControlPoint) {
-//         activeObjControlPoint.clear()
-//         activeObjControlPoint.lineStyle(1, 0xc66965)
-//         const radius = 4
-//         activeObjControlPoint.beginFill(0xffffff)
-//         activeObjControlPoint.drawCircle(0, 0, radius)
-//         activeObjControlPoint.endFill()
-//         const bound = getObjStageBound(activeObject)
-//         const [tl, tr] = bound
-//         activeObjControlPoint.position.set(
-//             (tl.x + tr.x) / 2,
-//             (tl.y + tr.y) / 2
-//         )
-//     }
-// }
-// app.ticker.add(updateActiveTargetControlPoint)
+function updateActiveTargetControlPoint() {
+    if (activeObject && activeObjControlPoint) {
+        activeObjControlPoint.clear()
+        activeObjControlPoint.lineStyle(1, 0xc66965)
+        const radius = 4
+        activeObjControlPoint.beginFill(0xffffff)
+        activeObjControlPoint.drawCircle(0, 0, radius)
+        activeObjControlPoint.endFill()
+        const bound = getObjStageBound(activeObject)
+        const [tl, tr] = bound
+        activeObjControlPoint.position.set(
+            (tl.x + tr.x) / 2,
+            (tl.y + tr.y) / 2
+        )
+    }
+}
+app.ticker.add(updateActiveTargetControlPoint)
 
 
 
